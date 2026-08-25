@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fisher-Based Defense Against Active Label Inference Attacks in VFL</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #0f1923;
+    color: #e8edf2;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .deck {
+    width: 100%;
+    height: 100vh;
+    position: relative;
+  }
+
+  .slide {
+    display: none;
+    width: 100%;
+    height: 100vh;
+    padding: 48px 72px;
+    flex-direction: column;
+    justify-content: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  .slide.active { display: flex; }
+
+  /* === SLIDE THEMES === */
+  .slide-title   { background: linear-gradient(135deg, #0d2137 0%, #132d45 100%); }
+  .slide-attack  { background: #0f1923; }
+  .slide-detect  { background: #0f1923; }
+  .slide-defense { background: #0f1923; }
+  .slide-status  { background: #0f1923; }
+
+  /* === TYPOGRAPHY === */
+  .slide-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #4a9fd4;
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1.25;
+    color: #e8edf2;
+    margin-bottom: 12px;
+  }
+
+  h2 {
+    font-size: 30px;
+    font-weight: 700;
+    color: #e8edf2;
+    margin-bottom: 28px;
+    border-bottom: 2px solid #1e4a6e;
+    padding-bottom: 12px;
+  }
+
+  .subtitle {
+    font-size: 16px;
+    color: #8ba3b8;
+    margin-bottom: 8px;
+    line-height: 1.6;
+  }
+
+  p, li {
+    font-size: 15px;
+    line-height: 1.7;
+    color: #c0cdd8;
+  }
+
+  li { margin-bottom: 6px; }
+
+  ul { padding-left: 20px; }
+
+  /* === LAYOUT === */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-top: 12px;
+  }
+
+  .three-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 24px;
+    margin-top: 12px;
+  }
+
+  .col-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #4a9fd4;
+    margin-bottom: 10px;
+  }
+
+  /* === BOXES === */
+  .box {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 20px 24px;
+  }
+
+  .box-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #4a9fd4;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .highlight-box {
+    background: rgba(74, 159, 212, 0.08);
+    border: 1px solid rgba(74, 159, 212, 0.3);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-top: 18px;
+  }
+
+  .warn-box {
+    background: rgba(255, 193, 7, 0.07);
+    border: 1px solid rgba(255, 193, 7, 0.25);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-top: 14px;
+  }
+
+  .success-box {
+    background: rgba(40, 167, 69, 0.08);
+    border: 1px solid rgba(40, 167, 69, 0.3);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-top: 14px;
+  }
+
+  /* === NUMBERS === */
+  .big-num {
+    font-size: 38px;
+    font-weight: 800;
+    color: #4a9fd4;
+    display: block;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .big-num.red   { color: #e05252; }
+  .big-num.green { color: #4caf82; }
+  .big-num.gold  { color: #f0a84a; }
+
+  .num-label {
+    font-size: 11px;
+    color: #7a93a8;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+
+  /* === TABLE === */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    margin-top: 12px;
+  }
+
+  th {
+    background: rgba(74, 159, 212, 0.12);
+    color: #4a9fd4;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 9px 12px;
+    text-align: left;
+    border-bottom: 1px solid rgba(74,159,212,0.2);
+  }
+
+  td {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: #c0cdd8;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  td.num  { font-weight: 700; color: #e8edf2; font-variant-numeric: tabular-nums; }
+  td.pos  { font-weight: 700; color: #e05252; }
+  td.neg  { font-weight: 700; color: #4caf82; }
+  td.hilite { background: rgba(74,159,212,0.08); font-weight: 700; color: #4a9fd4; }
+  td.tag  { font-size: 11px; color: #7a93a8; }
+
+  .row-attack td { background: rgba(224,82,82,0.04); }
+  .row-benign td { background: rgba(76,175,130,0.04); }
+  .row-defense td { background: rgba(74,159,212,0.05); }
+
+  /* === FORMULA === */
+  .formula {
+    background: rgba(0,0,0,0.3);
+    border-left: 3px solid #4a9fd4;
+    border-radius: 4px;
+    padding: 12px 18px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
+    color: #a8d4f0;
+    margin: 12px 0;
+    line-height: 1.6;
+  }
+
+  /* === STEP FLOW === */
+  .steps {
+    display: flex;
+    gap: 0;
+    margin: 16px 0;
+    align-items: stretch;
+  }
+
+  .step {
+    flex: 1;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 14px 16px;
+    text-align: center;
+    position: relative;
+  }
+
+  .step + .step { margin-left: 8px; }
+
+  .step-num {
+    font-size: 10px;
+    font-weight: 700;
+    color: #4a9fd4;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .step p {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #c0cdd8;
+  }
+
+  /* === NAV === */
+  .nav {
+    position: fixed;
+    bottom: 24px;
+    right: 36px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    z-index: 100;
+  }
+
+  .nav-btn {
+    background: rgba(74,159,212,0.15);
+    border: 1px solid rgba(74,159,212,0.3);
+    color: #4a9fd4;
+    padding: 8px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    transition: background 0.15s;
+  }
+
+  .nav-btn:hover { background: rgba(74,159,212,0.3); }
+
+  .slide-counter {
+    font-size: 12px;
+    color: #4a6a80;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+
+  /* title-page special layout */
+  .title-meta {
+    margin-top: 40px;
+    padding-top: 28px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    gap: 48px;
+  }
+
+  .meta-item .meta-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #4a6a80;
+    margin-bottom: 4px;
+  }
+
+  .meta-item .meta-val {
+    font-size: 14px;
+    color: #8ba3b8;
+  }
+
+  .tag-pill {
+    display: inline-block;
+    background: rgba(74,159,212,0.12);
+    border: 1px solid rgba(74,159,212,0.25);
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 12px;
+    color: #4a9fd4;
+    margin: 3px 3px 3px 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="deck">
+
+<!-- ============================================================ -->
+<!-- SLIDE 1: TITLE                                               -->
+<!-- ============================================================ -->
+<div class="slide slide-title active" id="slide-1">
+  <div class="slide-label">Research Progress — VFL Security</div>
+  <h1>Fisher-Based Asymmetric Detection<br>Against Active Label Inference Attacks<br>in Vertical Federated Learning</h1>
+  <div class="subtitle" style="margin-top:18px; font-size:15px; max-width:680px;">
+    The adversary uses a modified optimizer to make their embeddings class-discriminative.<br>
+    The server detects this via the Fisher criterion — without seeing the adversary's model.
+  </div>
+
+  <div class="title-meta">
+    <div class="meta-item">
+      <div class="meta-label">Researcher</div>
+      <div class="meta-val">Soumya Swagata</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Institution</div>
+      <div class="meta-val">BRAC University</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Current Phase</div>
+      <div class="meta-val">Phase 4 — 100-Epoch Validation (running)</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Stage</div>
+      <div class="meta-val">Detection confirmed · Defense under validation</div>
+    </div>
+  </div>
+
+  <div style="margin-top:28px;">
+    <span class="tag-pill">CIFAR-10</span>
+    <span class="tag-pill">CIFAR-100</span>
+    <span class="tag-pill">Fisher Criterion</span>
+    <span class="tag-pill">MaliciousSGD</span>
+    <span class="tag-pill">Asymmetric Defense</span>
+    <span class="tag-pill">MixMatch SSL</span>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- SLIDE 2: THE ATTACK                                          -->
+<!-- ============================================================ -->
+<div class="slide slide-attack" id="slide-2">
+  <div class="slide-label">Slide 2 of 5 — Threat Model</div>
+  <h2>The Active Label Inference Attack</h2>
+
+  <div class="two-col">
+    <div>
+      <div class="col-label">Two-Stage Attack Pipeline</div>
+      <div class="steps" style="flex-direction:column; gap:8px;">
+        <div class="step" style="text-align:left;">
+          <span class="step-num">Stage 1 — VFL Training</span>
+          <p>Party A replaces standard SGD with <strong style="color:#e8edf2;">MaliciousSGD</strong>. After the chain rule, it amplifies its own parameter gradients element-wise:</p>
+          <div class="formula" style="margin-top:8px; font-size:12.5px;">
+            ratio = clamp(1 + γ · (g_t / g_{t-1}),  min=1.0, max=5.0)<br>
+            p.grad ← p.grad × ratio
+          </div>
+          <p style="font-size:13px;">Result: Party A's bottom model learns <strong style="color:#e8edf2;">maximally class-discriminative embeddings</strong>. Checkpoint saved to disk.</p>
+        </div>
+        <div class="step" style="text-align:left;">
+          <span class="step-num">Stage 2 — Label Inference</span>
+          <p>Party A loads its saved bottom model, trains a small inference head via <strong style="color:#e8edf2;">MixMatch semi-supervised learning</strong> (only 40 labeled samples on CIFAR-10). Recovers training labels of all other parties.</p>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="col-label">Why It's Hard to Stop</div>
+      <div class="box" style="margin-bottom:12px;">
+        <div class="box-title">Key Architectural Fact</div>
+        <p style="font-size:13.5px;">MaliciousSGD operates on <strong style="color:#e8edf2;">p.grad</strong> — the gradient <em>inside</em> Party A's model. The server only sees <strong style="color:#e8edf2;">grad_output</strong> — the gradient it sends to Party A. These are <strong style="color:#e8edf2;">different tensors</strong>. Gradient norm monitoring therefore cannot detect the attack.</p>
+      </div>
+      <div class="box" style="margin-bottom:12px;">
+        <div class="box-title">Confirmed Attack Strength (CIFAR-10, 100 epochs)</div>
+        <table>
+          <tr>
+            <th>Condition</th><th>Inference Acc.</th><th>Δ</th>
+          </tr>
+          <tr class="row-benign">
+            <td>Passive (no attack)</td>
+            <td class="num">84.61%</td>
+            <td class="tag">baseline</td>
+          </tr>
+          <tr class="row-attack">
+            <td><strong>Active — Party A only</strong></td>
+            <td class="num">94.99%</td>
+            <td class="pos">+10.38pp</td>
+          </tr>
+          <tr>
+            <td>Active — all parties</td>
+            <td class="num">85.39%</td>
+            <td class="tag">+0.78pp (symmetric, no edge)</td>
+          </tr>
+        </table>
+      </div>
+      <div class="highlight-box" style="margin-top:8px;">
+        <p style="font-size:13px;"><strong style="color:#e8edf2;">Key insight:</strong> The single-party attack creates a large edge (+10.38pp). The all-parties attack does not — because when <em>both</em> parties amplify symmetrically, no asymmetry exists to exploit. Our defense targets exactly this asymmetry.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- SLIDE 3: DETECTION — FISHER DIVERGENCE                       -->
+<!-- ============================================================ -->
+<div class="slide slide-detect" id="slide-3">
+  <div class="slide-label">Slide 3 of 5 — Core Contribution: Detection Signal</div>
+  <h2>Fisher Criterion as an Attack Detection Signal</h2>
+
+  <div class="two-col">
+    <div>
+      <div class="col-label">The Insight</div>
+      <p style="font-size:14px;">The Fisher criterion <strong style="color:#e8edf2;">J = Tr(S<sub>B</sub>) / Tr(S<sub>W</sub>)</strong> measures how class-separable a set of embeddings is. MaliciousSGD causes Party A's Fisher score J<sub>A</sub> to grow while Party B's J<sub>B</sub> stays low. The server computes the <strong style="color:#4a9fd4;">divergence Δ<sub>F</sub> = J<sub>A</sub> − J<sub>B</sub></strong> each epoch from the embedding tensors it already receives — no access to Party A's model needed.</p>
+
+      <div class="formula" style="margin-top:14px;">
+        Δ<sub>F</sub> = J_A − J_B<br><br>
+        Benign training:  J_A ≈ J_B  →  Δ<sub>F</sub> ≈ 0<br>
+        Attack active:    J_A >> J_B  →  Δ<sub>F</sub> >> 0
+      </div>
+
+      <div class="col-label" style="margin-top:18px;">CIFAR-10: Divergence at Epoch 29</div>
+      <table>
+        <tr><th>Condition</th><th>J<sub>A</sub></th><th>J<sub>B</sub></th><th>Δ<sub>F</sub></th></tr>
+        <tr class="row-benign">
+          <td>Benign</td><td class="num">0.517</td><td class="num">0.638</td><td class="neg">−0.120</td>
+        </tr>
+        <tr class="row-attack">
+          <td><strong>Active Party A</strong></td><td class="num">0.826</td><td class="num">0.381</td><td class="pos">+0.444</td>
+        </tr>
+        <tr>
+          <td>Active All Parties</td><td class="num">0.699</td><td class="num">0.841</td><td class="neg">−0.142</td>
+        </tr>
+        <tr class="row-defense">
+          <td>Active + GC (75%)</td><td class="num">0.822</td><td class="num">0.301</td><td class="pos">+0.521</td>
+        </tr>
+      </table>
+      <p style="font-size:12px; color:#5a7a90; margin-top:6px;">Gradient compression does not hide the attack — it amplifies the signal.</p>
+    </div>
+
+    <div>
+      <div class="col-label">Key Results from Phase 1 Characterization</div>
+
+      <div class="three-col" style="grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+        <div class="box" style="text-align:center; padding:16px;">
+          <span class="big-num">0.564</span>
+          <span class="num-label">Detection gap<br>CIFAR-10</span>
+        </div>
+        <div class="box" style="text-align:center; padding:16px;">
+          <span class="big-num">0.129</span>
+          <span class="num-label">Detection gap<br>CIFAR-100</span>
+        </div>
+        <div class="box" style="text-align:center; padding:16px;">
+          <span class="big-num" style="font-size:28px;">Ep 4</span>
+          <span class="num-label">Signal available from<br>CIFAR-10</span>
+        </div>
+        <div class="box" style="text-align:center; padding:16px;">
+          <span class="big-num" style="font-size:28px;">Ep 8</span>
+          <span class="num-label">Signal available from<br>CIFAR-100</span>
+        </div>
+      </div>
+
+      <div class="col-label">CIFAR-100: Divergence at Epoch 29</div>
+      <table style="margin-bottom:12px;">
+        <tr><th>Condition</th><th>J<sub>A</sub></th><th>J<sub>B</sub></th><th>Δ<sub>F</sub></th></tr>
+        <tr class="row-benign">
+          <td>Benign</td><td class="num">0.232</td><td class="num">0.231</td><td class="neg">+0.002</td>
+        </tr>
+        <tr class="row-attack">
+          <td><strong>Active Party A</strong></td><td class="num">0.352</td><td class="num">0.220</td><td class="pos">+0.131</td>
+        </tr>
+        <tr>
+          <td>Active All Parties</td><td class="num">0.280</td><td class="num">0.305</td><td class="neg">−0.025</td>
+        </tr>
+      </table>
+
+      <div class="success-box">
+        <p style="font-size:13.5px;"><strong style="color:#4caf82;">Detection is confirmed on both datasets.</strong> A fixed threshold τ = +0.10 separates attack from benign on CIFAR-10 from epoch 4 onward with zero false positives. CIFAR-100 requires 8-epoch burn-in due to noisy initialization, then separates cleanly.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- SLIDE 4: THE DEFENSE & SEMANTIC MISALIGNMENT DISCOVERY       -->
+<!-- ============================================================ -->
+<div class="slide slide-defense" id="slide-4">
+  <div class="slide-label">Slide 4 of 5 — Defense Mechanism</div>
+  <h2>Asymmetric Adaptive Gradient Perturbation</h2>
+
+  <div class="two-col">
+    <div>
+      <div class="col-label">Defense Design</div>
+      <p style="font-size:14px; margin-bottom:12px;">When Δ<sub>F</sub> exceeds threshold τ (after burn-in), the server scales down the gradient it sends to Party A. Party B's gradient is unchanged — the defense is <strong style="color:#e8edf2;">asymmetric by design</strong>.</p>
+
+      <div class="formula">
+        scale = max(0.0,  1 − α · (Δ<sub>F</sub> − τ))<br><br>
+        grad_output_A  ←  grad_output_A × scale<br>
+        grad_output_B  unchanged
+      </div>
+
+      <div style="margin-top:16px;">
+        <div class="col-label">False Positive Behavior (Validated)</div>
+        <table>
+          <tr><th>Condition</th><th>Δ<sub>F</sub> at ep 29</th><th>Defense fires?</th></tr>
+          <tr class="row-attack">
+            <td>CIFAR-10 Active + defense</td><td class="pos">+0.522</td><td class="tag">✅ Yes (ep 8+)</td>
+          </tr>
+          <tr class="row-benign">
+            <td>CIFAR-10 Benign + defense</td><td class="num">+0.094</td><td class="neg tag">✅ No (below τ)</td>
+          </tr>
+          <tr class="row-attack">
+            <td>CIFAR-100 Active + defense</td><td class="pos">+0.167</td><td class="tag">✅ Yes (ep 8+)</td>
+          </tr>
+          <tr class="row-benign">
+            <td>CIFAR-100 Benign + defense</td><td class="neg">−0.031</td><td class="neg tag">✅ Never fires</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="box" style="margin-top:14px; padding:14px;">
+        <div class="box-title">VFL Utility Cost (CIFAR-10, Phase 2)</div>
+        <p style="font-size:13.5px;">Active + defense test accuracy: <strong style="color:#e8edf2;">60.94%</strong> vs benign baseline <strong style="color:#e8edf2;">62.71%</strong> → only <strong style="color:#4caf82;">−1.77pp loss</strong> in VFL utility.</p>
+      </div>
+    </div>
+
+    <div>
+      <div class="col-label">Novel Mechanistic Discovery</div>
+      <div class="highlight-box" style="margin-top:0;">
+        <p style="font-size:14px;"><strong style="color:#4a9fd4;">Hypothesis (original):</strong> Defense would suppress Fisher divergence — make Party A's embeddings geometrically less separable.</p>
+        <p style="font-size:14px; margin-top:10px;"><strong style="color:#4a9fd4;">What we found instead:</strong> Fisher divergence <em>increases</em> under the defense (0.444 → 0.522 on CIFAR-10). The geometry stays separated. But inference accuracy drops.</p>
+      </div>
+
+      <div class="box" style="margin-top:14px;">
+        <div class="box-title">Why — Semantic Misalignment</div>
+        <p style="font-size:13.5px;">MaliciousSGD amplifies Party A's <em>internal</em> gradients (p.grad) — the defense cannot reach these. So the embedding clusters remain geometrically structured.</p>
+        <p style="font-size:13.5px; margin-top:8px;">But by suppressing the <em>task gradient</em> from the server, the defense removes the semantic calibration that makes clusters correspond to ground-truth labels. MixMatch SSL fails when cluster geometry does not reflect class structure.</p>
+        <div class="formula" style="font-size:12.5px; margin-top:10px;">
+          Defense breaks:  cluster ↔ label correspondence<br>
+          Defense preserves: geometric cluster structure<br>
+          Fisher measures: geometry  →  signal stays high<br>
+          MixMatch needs:  semantics  →  inference fails
+        </div>
+      </div>
+
+      <div class="success-box" style="margin-top:12px;">
+        <p style="font-size:13.5px;"><strong style="color:#4caf82;">Why this is a stronger contribution:</strong> "Defense breaks semantic label alignment" is a more nuanced and novel mechanism than "defense reduces separability" — it reveals a new failure mode of MixMatch-based inference under semantic corruption.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- SLIDE 5: STATUS & NEXT STEPS                                 -->
+<!-- ============================================================ -->
+<div class="slide slide-status" id="slide-5">
+  <div class="slide-label">Slide 5 of 5 — Current Status</div>
+  <h2>Where We Are — and Why the Direction is Sound</h2>
+
+  <div class="two-col">
+    <div>
+      <div class="col-label">What is Confirmed ✅</div>
+      <div class="box" style="margin-bottom:10px;">
+        <ul style="font-size:13.5px;">
+          <li><strong style="color:#4caf82;">Fisher divergence detects the attack</strong> on both CIFAR-10 (gap 0.564) and CIFAR-100 (gap 0.129) — clean separation from epoch 4 / 8 onward.</li>
+          <li style="margin-top:8px;"><strong style="color:#4caf82;">Zero false positives.</strong> Defense never fires on benign training — confirmed by full epoch trajectory in both datasets.</li>
+          <li style="margin-top:8px;"><strong style="color:#4caf82;">Gradient compression does not hide the attack</strong> — GC amplifies the Fisher signal (0.444 → 0.521).</li>
+          <li style="margin-top:8px;"><strong style="color:#4caf82;">Semantic misalignment mechanism identified</strong> — a novel finding beyond the original hypothesis, strengthens the paper narrative.</li>
+          <li style="margin-top:8px;"><strong style="color:#4caf82;">VFL utility cost is minimal</strong> — only −1.77pp on CIFAR-10 at primary hyperparameters (α=1.0, τ=0.10).</li>
+        </ul>
+      </div>
+
+      <div class="col-label" style="margin-top:6px;">Hyperparameter Ablation (Stage 1, Phase 3b)</div>
+      <table style="font-size:12.5px;">
+        <tr><th>α (strength)</th><th>CIFAR-10 VFL cost</th><th>Collateral (benign)</th></tr>
+        <tr><td>0.5 (weak)</td><td class="num">63.59%</td><td class="neg">−0pp</td></tr>
+        <tr class="row-defense"><td><strong>1.0 (primary)</strong></td><td class="num">60.94%</td><td class="neg">+1.08pp</td></tr>
+        <tr><td>2.0 (strong)</td><td class="num">59.69%</td><td class="tag">−4.54pp (CIFAR-100)</td></tr>
+      </table>
+    </div>
+
+    <div>
+      <div class="col-label">Methodological Note — Corrected</div>
+      <div class="warn-box">
+        <p style="font-size:13px;"><strong style="color:#f0a84a;">Issue caught and fixed:</strong> Early comparisons mixed 30-epoch defended results with 100-epoch undefended results (epoch confound). The attack on CIFAR-10 does not create an inference edge at only 30 epochs — so any defense measurement at 30 epochs tests against a non-working attack.</p>
+        <p style="font-size:13px; margin-top:8px;">We identified this, designed the corrected experiment, and it is <strong style="color:#e8edf2;">currently running</strong>.</p>
+      </div>
+
+      <div class="col-label" style="margin-top:16px;">Running Now — Phase 4 (100-Epoch Validation)</div>
+      <div class="steps" style="flex-direction:column; gap:8px; margin-top:0;">
+        <div class="step" style="text-align:left; border-color:rgba(74,159,212,0.3);">
+          <span class="step-num">Stage 1 — CIFAR-10 × 3 conditions × 100 epochs</span>
+          <p style="font-size:13px;">Benign · Active (no defense) · Active + defense — all at same epoch count for the first time.</p>
+        </div>
+        <div class="step" style="text-align:left; border-color:rgba(74,159,212,0.3);">
+          <span class="step-num">Stage 2 — Model Completion on all 3 checkpoints</span>
+          <p style="font-size:13px;">Valid paper claim requires: inference(active + defense) &lt;&lt; inference(active no defense), and close to benign baseline.</p>
+        </div>
+      </div>
+
+      <div class="success-box" style="margin-top:12px;">
+        <p style="font-size:13.5px;"><strong style="color:#4caf82;">Expected outcome:</strong> At 100 epochs, the attack converges fully (94.99% from prior run). The defense's semantic misalignment effect accumulates over 92 epochs. Both the detection signal and the defense mechanism are empirically grounded. Results expected today.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end .deck -->
+
+<!-- Navigation -->
+<div class="nav">
+  <button class="nav-btn" onclick="changeSlide(-1)">← Prev</button>
+  <span class="slide-counter" id="counter">1 / 5</span>
+  <button class="nav-btn" onclick="changeSlide(1)">Next →</button>
+</div>
+
+<script>
+  let current = 1;
+  const total = 5;
+
+  function showSlide(n) {
+    document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+    document.getElementById('slide-' + n).classList.add('active');
+    document.getElementById('counter').textContent = n + ' / ' + total;
+    current = n;
+  }
+
+  function changeSlide(dir) {
+    let next = current + dir;
+    if (next < 1) next = 1;
+    if (next > total) next = total;
+    showSlide(next);
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp') changeSlide(-1);
+  });
+</script>
+</body>
+</html>

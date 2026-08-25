@@ -1,0 +1,4 @@
+phase,exp_id,dataset,num_classes,stage1_epochs,stage2_epochs,condition,attack_type,defense_name,defense_alpha,defense_tau,defense_burn_in,manual_seed,stage1_lr,stage1_test_top1,mc_best_train_top1,mc_vs_benign_pp,mc_vs_attack_pp,vfl_utility_cost_pp,n_labeled,notes
+Phase 17 Yahoo Benign,EXP-030,YahooAnswers,10,100,25,benign,none,none,,,,,0,0.001,,,,,,40,🟡 RUNNING — Stage 1 benign in progress. lr=0.001 (BERT-based MixText; NOT 0.1 like image datasets).
+Phase 17 Yahoo Attack,EXP-030,YahooAnswers,10,100,25,active_party_a,MaliciousSGD,none,,,,,0,0.001,,,,,,40,⏳ NOT YET RUN — will run after benign Stage 1 completes
+Phase 17 Yahoo Defense,EXP-030,YahooAnswers,10,100,25,active+defense,MaliciousSGD,AsymmetricAdaptivePerturbation,1.0,0.10,8,0,0.001,,,,,,40,⏳ NOT YET RUN — will run after attack Stage 1 completes

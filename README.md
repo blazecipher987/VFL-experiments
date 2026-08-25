@@ -16,7 +16,7 @@ https://www.kaggle.com/soumikrakshit/yahoo-answers-dataset
 
 Criteo dataset:
 
-https://labs.criteo.com/2014/02/download-kaggle-display-advertising-challenge-dataset/
+https://labs.criteo.com/2014/02/ download-kaggle-display-advertising-challenge-dataset/
 
 Breast histopathology images: 
 

@@ -1,0 +1,434 @@
+Namespace(dataset_name='CINIC10L', dataset_path='.\\data\\CINIC10L', n_labeled=40, num_layer=1, use_bn=True, activation_func_type='ReLU', party_num=2, half=16, resume_dir='.\\saved_experiment_results\\saved_models\\', resume_name='CINIC10L_saved_framework_lr=0.1_mal_asym_def-a=1.0-t=0.1-b=8_half=16.pth', out='.\\saved_experiment_results\\saved_models\\CINIC10L_saved_models/', k=4, batch_size=16, epochs=25, lr=0.002, gpu='0', manualSeed=0, val_iteration=1024, alpha=0.75, lambda_u=50, T=0.8, ema_decay=0.999, print_to_txt=1, resume='.\\saved_experiment_results\\saved_models\\CINIC10L_saved_models/CINIC10L_saved_framework_lr=0.1_mal_asym_def-a=1.0-t=0.1-b=8_half=16.pth')
+==> Preparing CINIC10L
+#Labeled: 40 #Unlabeled: 89960
+==> creating bottom model plus
+==> Resuming from checkpoint..
+checkpoint: BottomModelForCinic10(
+  (resnet20): ResNet(
+    (conv1): Conv2d(3, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+    (bn1): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (layer1): Sequential(
+      (0): BasicBlock(
+        (conv1): Conv2d(16, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn1): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(16, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (shortcut): Sequential()
+      )
+      (1): BasicBlock(
+        (conv1): Conv2d(16, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn1): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(16, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (shortcut): Sequential()
+      )
+      (2): BasicBlock(
+        (conv1): Conv2d(16, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn1): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(16, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (shortcut): Sequential()
+      )
+    )
+    (layer2): Sequential(
+      (0): BasicBlock(
+        (conv1): Conv2d(16, 32, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+        (bn1): BatchNorm2d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (shortcut): LambdaLayer()
+      )
+      (1): BasicBlock(
+        (conv1): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn1): BatchNorm2d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (shortcut): Sequential()
+      )
+      (2): BasicBlock(
+        (conv1): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn1): BatchNorm2d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (shortcut): Sequential()
+      )
+    )
+    (layer3): Sequential(
+      (0): BasicBlock(
+        (conv1): Conv2d(32, 64, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+        (bn1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (shortcut): LambdaLayer()
+      )
+      (1): BasicBlock(
+        (conv1): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (shortcut): Sequential()
+      )
+      (2): BasicBlock(
+        (conv1): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (shortcut): Sequential()
+      )
+    )
+    (linear): Linear(in_features=64, out_features=10, bias=True)
+  )
+)
+---Label inference on complete training dataset:
+
+Epoch: [1 | 25] LR: 0.002000
+batch_idx: 0  loss: 2.280190944671631
+batch_idx: 250  loss: 1.8968318800527262
+batch_idx: 500  loss: 1.7181876341025986
+batch_idx: 750  loss: 1.6425354895039341
+batch_idx: 1000  loss: 1.5979965685845374
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+top 1 accuracy:17.85364768683274, top 4 accuracy:55.35142348754449
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+top 1 accuracy:17.593333333333334, top 4 accuracy:54.016666666666666
+
+Epoch: [2 | 25] LR: 0.002000
+batch_idx: 0  loss: 1.4423202276229858
+batch_idx: 250  loss: 1.520690097276908
+batch_idx: 500  loss: 1.5082964667541063
+batch_idx: 750  loss: 1.504010227802749
+batch_idx: 1000  loss: 1.4900874634246368
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+top 1 accuracy:38.62878113879004, top 4 accuracy:78.59430604982207
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+top 1 accuracy:35.373333333333335, top 4 accuracy:75.5911111111111
+
+Epoch: [3 | 25] LR: 0.002000
+batch_idx: 0  loss: 1.629042387008667
+batch_idx: 250  loss: 1.4763707276359497
+batch_idx: 500  loss: 1.5071964808804785
+batch_idx: 750  loss: 1.4894811387227156
+batch_idx: 1000  loss: 1.4762834264086437
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+top 1 accuracy:42.75911921708185, top 4 accuracy:82.78914590747331
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+top 1 accuracy:38.7, top 4 accuracy:79.98777777777778
+
+Epoch: [4 | 25] LR: 0.002000
+batch_idx: 0  loss: 0.9142598509788513
+batch_idx: 250  loss: 1.4590555602810773
+batch_idx: 500  loss: 1.4636798959054396
+batch_idx: 750  loss: 1.4724816333914248
+batch_idx: 1000  loss: 1.4796848569835697
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+top 1 accuracy:50.032250889679716, top 4 accuracy:88.60097864768683
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+top 1 accuracy:45.11888888888889, top 4 accuracy:85.44333333333333
+
+Epoch: [5 | 25] LR: 0.002000
+batch_idx: 0  loss: 1.764577031135559
+batch_idx: 250  loss: 1.5004732649164845
+batch_idx: 500  loss: 1.4849590035731683
+batch_idx: 750  loss: 1.4998290636409297
+batch_idx: 1000  loss: 1.5156843129333322
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+top 1 accuracy:57.018460854092524, top 4 accuracy:90.76067615658363
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+top 1 accuracy:51.46666666666667, top 4 accuracy:87.53
+
+Epoch: [6 | 25] LR: 0.002000
+batch_idx: 0  loss: 1.3394421339035034
+batch_idx: 250  loss: 1.4918111334758926
+batch_idx: 500  loss: 1.5251216660002749
+batch_idx: 750  loss: 1.5295170819394281
+batch_idx: 1000  loss: 1.5316949595104565
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+top 1 accuracy:60.75845195729537, top 4 accuracy:91.62811387900356
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+top 1 accuracy:54.736666666666665, top 4 accuracy:88.38555555555556
+
+Epoch: [7 | 25] LR: 0.002000
+batch_idx: 0  loss: 0.9558154940605164
+batch_idx: 250  loss: 1.5631016511841125
+batch_idx: 500  loss: 1.5717832204586493
+batch_idx: 750  loss: 1.5760323305263342
+batch_idx: 1000  loss: 1.5643666913578442
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+top 1 accuracy:61.84163701067616, top 4 accuracy:91.97731316725978
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+top 1 accuracy:55.70444444444445, top 4 accuracy:88.75
+
+Epoch: [8 | 25] LR: 0.002000
+batch_idx: 0  loss: 2.068838596343994
+batch_idx: 250  loss: 1.5435712313747025
+batch_idx: 500  loss: 1.5592440662983649
+batch_idx: 750  loss: 1.543071231813469
+batch_idx: 1000  loss: 1.5583135806001744
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+top 1 accuracy:62.25200177935943, top 4 accuracy:92.20195729537366
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+top 1 accuracy:56.16222222222222, top 4 accuracy:88.87333333333333
+
+Epoch: [9 | 25] LR: 0.002000
+batch_idx: 0  loss: 1.0258491039276123
+batch_idx: 250  loss: 1.5568385952972321
+batch_idx: 500  loss: 1.5469272079581986
+batch_idx: 750  loss: 1.5374910370328931
+batch_idx: 1000  loss: 1.5573957485037964
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+top 1 accuracy:62.23976868327402, top 4 accuracy:92.25311387900356
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+top 1 accuracy:56.138888888888886, top 4 accuracy:89.00555555555556
+
+Epoch: [10 | 25] LR: 0.002000
+batch_idx: 0  loss: 1.7537444829940796
+batch_idx: 250  loss: 1.5429069817778598
+batch_idx: 500  loss: 1.583296194761813
+batch_idx: 750  loss: 1.5711888409803774
+batch_idx: 1000  loss: 1.5760309327017892
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+top 1 accuracy:62.14524021352313, top 4 accuracy:92.18527580071175
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+top 1 accuracy:56.04222222222222, top 4 accuracy:89.04555555555555
+
+Epoch: [11 | 25] LR: 0.002000
+batch_idx: 0  loss: 1.035280704498291
+batch_idx: 250  loss: 1.5812693387863646
+batch_idx: 500  loss: 1.5944046826657658
+batch_idx: 750  loss: 1.5887743112409163
+batch_idx: 1000  loss: 1.596082501180403
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+top 1 accuracy:62.061832740213525, top 4 accuracy:92.31539145907473
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+top 1 accuracy:55.94555555555556, top 4 accuracy:89.14
+
+Epoch: [12 | 25] LR: 0.002000
+batch_idx: 0  loss: 1.7309138774871826
+batch_idx: 250  loss: 1.6826703163732095
+batch_idx: 500  loss: 1.670823275923967
+batch_idx: 750  loss: 1.6434343090546275
+batch_idx: 1000  loss: 1.6250323186983
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+top 1 accuracy:62.006227758007114, top 4 accuracy:92.37099644128114
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+top 1 accuracy:55.913333333333334, top 4 accuracy:89.19444444444444
+
+Epoch: [13 | 25] LR: 0.002000
+batch_idx: 0  loss: 0.8985703587532043
+batch_idx: 250  loss: 1.690091029343852
+batch_idx: 500  loss: 1.6667051559198878
+batch_idx: 750  loss: 1.6461873802935554
+batch_idx: 1000  loss: 1.6539735892912248
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+top 1 accuracy:62.14635231316726, top 4 accuracy:92.48665480427046
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+top 1 accuracy:56.047777777777775, top 4 accuracy:89.34
+
+Epoch: [14 | 25] LR: 0.002000
+batch_idx: 0  loss: 0.9639899730682373
+batch_idx: 250  loss: 1.6465290658977403
+batch_idx: 500  loss: 1.6678303750213272
+batch_idx: 750  loss: 1.6597459535306684
+batch_idx: 1000  loss: 1.6693002696518418
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+top 1 accuracy:62.02735765124555, top 4 accuracy:92.52112989323844
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+top 1 accuracy:55.95444444444445, top 4 accuracy:89.36444444444444
+
+Epoch: [15 | 25] LR: 0.002000
+batch_idx: 0  loss: 1.9968171119689941
+batch_idx: 250  loss: 1.6434785631073423
+batch_idx: 500  loss: 1.6702127146149823
+batch_idx: 750  loss: 1.677077793249595
+batch_idx: 1000  loss: 1.678833101596032
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+top 1 accuracy:61.906138790035584, top 4 accuracy:92.60342526690391
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+top 1 accuracy:55.833333333333336, top 4 accuracy:89.41
+
+Epoch: [16 | 25] LR: 0.002000
+batch_idx: 0  loss: 2.1837193965911865
+batch_idx: 250  loss: 1.7121557279886952
+batch_idx: 500  loss: 1.7071763514996527
+batch_idx: 750  loss: 1.7014251603743684
+batch_idx: 1000  loss: 1.6977400720774471
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+top 1 accuracy:61.90169039145908, top 4 accuracy:92.57895907473309
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+top 1 accuracy:55.84111111111111, top 4 accuracy:89.42333333333333
+
+Epoch: [17 | 25] LR: 0.002000
+batch_idx: 0  loss: 1.04776930809021
+batch_idx: 250  loss: 1.72466001496372
+batch_idx: 500  loss: 1.73413442006844
+batch_idx: 750  loss: 1.7204859213886186
+batch_idx: 1000  loss: 1.724154515283091
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+top 1 accuracy:62.06072064056939, top 4 accuracy:92.68016014234875
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+top 1 accuracy:56.013333333333335, top 4 accuracy:89.53222222222222
+
+Epoch: [18 | 25] LR: 0.002000
+batch_idx: 0  loss: 1.8652994632720947
+batch_idx: 250  loss: 1.701690450607543
+batch_idx: 500  loss: 1.7083961216513506
+batch_idx: 750  loss: 1.6981025905647227
+batch_idx: 1000  loss: 1.711589630428966
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+top 1 accuracy:62.082962633451956, top 4 accuracy:92.71018683274022
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+top 1 accuracy:56.02777777777778, top 4 accuracy:89.5188888888889
+
+Epoch: [19 | 25] LR: 0.002000
+batch_idx: 0  loss: 1.1429908275604248
+batch_idx: 250  loss: 1.7342935515589923
+batch_idx: 500  loss: 1.751776720354419
+batch_idx: 750  loss: 1.76034959432447
+batch_idx: 1000  loss: 1.7656028501160972
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+top 1 accuracy:62.061832740213525, top 4 accuracy:92.66459074733096
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+top 1 accuracy:56.0, top 4 accuracy:89.48444444444445
+
+Epoch: [20 | 25] LR: 0.002000
+batch_idx: 0  loss: 1.2206634283065796
+batch_idx: 250  loss: 1.7523175397242208
+batch_idx: 500  loss: 1.7683284379051116
+batch_idx: 750  loss: 1.7647098730629516
+batch_idx: 1000  loss: 1.7644836355398943
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+top 1 accuracy:61.9817615658363, top 4 accuracy:92.769128113879
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+top 1 accuracy:55.964444444444446, top 4 accuracy:89.55111111111111
+
+Epoch: [21 | 25] LR: 0.002000
+batch_idx: 0  loss: 1.851555347442627
+batch_idx: 250  loss: 1.8176340261303572
+batch_idx: 500  loss: 1.7993105491716228
+batch_idx: 750  loss: 1.7877503331904405
+batch_idx: 1000  loss: 1.7815911621599645
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+top 1 accuracy:62.119661921708186, top 4 accuracy:92.81361209964413
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+top 1 accuracy:56.17777777777778, top 4 accuracy:89.60333333333334
+
+Epoch: [22 | 25] LR: 0.002000
+batch_idx: 0  loss: 2.1482081413269043
+batch_idx: 250  loss: 1.8264842912020436
+batch_idx: 500  loss: 1.7706349555127874
+batch_idx: 750  loss: 1.7804281129817987
+batch_idx: 1000  loss: 1.7813072337970868
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+top 1 accuracy:62.161921708185055, top 4 accuracy:92.8681049822064
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+top 1 accuracy:56.18333333333333, top 4 accuracy:89.62222222222222
+
+Epoch: [23 | 25] LR: 0.002000
+batch_idx: 0  loss: 1.4594379663467407
+batch_idx: 250  loss: 1.8031856170688492
+batch_idx: 500  loss: 1.806778564424572
+batch_idx: 750  loss: 1.8310630553254434
+batch_idx: 1000  loss: 1.8161770338183278
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+top 1 accuracy:62.2508896797153, top 4 accuracy:92.93038256227759
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+top 1 accuracy:56.29, top 4 accuracy:89.68555555555555
+
+Epoch: [24 | 25] LR: 0.002000
+batch_idx: 0  loss: 1.1395491361618042
+batch_idx: 250  loss: 1.8139841570797195
+batch_idx: 500  loss: 1.8202941003673805
+batch_idx: 750  loss: 1.8264050182108873
+batch_idx: 1000  loss: 1.834537644248147
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+top 1 accuracy:62.432161921708186, top 4 accuracy:92.91592526690391
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+top 1 accuracy:56.39888888888889, top 4 accuracy:89.67
+
+Epoch: [25 | 25] LR: 0.002000
+batch_idx: 0  loss: 2.849475383758545
+batch_idx: 250  loss: 1.8892335438158407
+batch_idx: 500  loss: 1.8660171158061531
+batch_idx: 750  loss: 1.8579486227543471
+batch_idx: 1000  loss: 1.8642024189442188
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+top 1 accuracy:62.30983096085409, top 4 accuracy:93.00822953736655
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+top 1 accuracy:56.35, top 4 accuracy:89.74666666666667
+Best top 1 accuracy:
+62.432161921708186

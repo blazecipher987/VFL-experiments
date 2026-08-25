@@ -9,19 +9,30 @@ import pickle
 
 class Translator:
     """Backtranslation. Here to save time, we pre-processing and save all the translated data into pickle files.
+    Falls back to returning original text if pkl files are not available.
     """
 
     def __init__(self, path, transform_type='BackTranslation'):
-        # Pre-processed German data
-        with open(path + 'de_1.pkl', 'rb') as f:
-            self.de = pickle.load(f)
-        # Pre-processed Russian data
-        with open(path + 'ru_1.pkl', 'rb') as f:
-            self.ru = pickle.load(f)
+        try:
+            with open(path + 'de_1.pkl', 'rb') as f:
+                self.de = pickle.load(f)
+            with open(path + 'ru_1.pkl', 'rb') as f:
+                self.ru = pickle.load(f)
+            self._available = True
+        except FileNotFoundError:
+            self.de = {}
+            self.ru = {}
+            self._available = False
+            print("[Translator] Back-translation pkl files not found at '{}'. "
+                  "Falling back to original text for unlabeled augmentation.".format(path))
 
     def __call__(self, ori, idx):
-        out1 = self.de[idx]
-        out2 = self.ru[idx]
+        if self._available:
+            out1 = self.de[idx]
+            out2 = self.ru[idx]
+        else:
+            out1 = ori
+            out2 = ori
         return out1, out2, ori
 
 def get_data(data_path, n_labeled_per_class, unlabeled_per_class=5000, max_seq_len=256, model='bert-base-uncased', train_aug=False):

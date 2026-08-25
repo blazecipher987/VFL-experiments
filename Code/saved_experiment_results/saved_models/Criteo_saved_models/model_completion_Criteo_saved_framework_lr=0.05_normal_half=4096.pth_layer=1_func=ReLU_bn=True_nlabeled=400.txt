@@ -1,0 +1,313 @@
+Namespace(dataset_name='Criteo', dataset_path='.\\data\\Criteo\\criteo.csv', n_labeled=400, num_layer=1, use_bn=True, activation_func_type='ReLU', party_num=2, half=4096, resume_dir='.\\saved_experiment_results\\saved_models\\', resume_name='Criteo_saved_framework_lr=0.05_normal_half=4096.pth', out='.\\saved_experiment_results\\saved_models\\Criteo_saved_models/', k=2, batch_size=16, epochs=25, lr=0.002, gpu='0', manualSeed=0, val_iteration=1024, alpha=0.75, lambda_u=50, T=0.8, ema_decay=0.999, print_to_txt=1, resume='.\\saved_experiment_results\\saved_models\\Criteo_saved_models/Criteo_saved_framework_lr=0.05_normal_half=4096.pth')
+==> Preparing Criteo
+#Labeled: 4 #Unlabeled: 9996
+==> creating bottom model plus
+==> Resuming from checkpoint..
+checkpoint: BottomModelForCriteo(
+  (fc1): Linear(in_features=4096, out_features=64, bias=True)
+  (fc2): Linear(in_features=64, out_features=16, bias=True)
+  (fc3): Linear(in_features=16, out_features=4, bias=True)
+)
+---Label inference on complete training dataset:
+
+Epoch: [1 | 25] LR: 0.002000
+batch_idx: 0  loss: 0.7341038584709167
+batch_idx: 250  loss: 0.6772596610494819
+batch_idx: 500  loss: 0.6684588118941485
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+  precision 0.5  recall 1.0  F1 0.6666666666666666top 1 accuracy:50.0, top 2 accuracy:100.0
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+  precision 0.5  recall 1.0  F1 0.6666666666666666top 1 accuracy:50.0, top 2 accuracy:100.0
+
+Epoch: [2 | 25] LR: 0.002000
+batch_idx: 0  loss: 0.6639425158500671
+batch_idx: 250  loss: 0.6732320130108838
+batch_idx: 500  loss: 0.6741913793805593
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+  precision 0.5  recall 1.0  F1 0.6666666666666666top 1 accuracy:50.0, top 2 accuracy:100.0
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+  precision 0.5  recall 1.0  F1 0.6666666666666666top 1 accuracy:50.0, top 2 accuracy:100.0
+
+Epoch: [3 | 25] LR: 0.002000
+batch_idx: 0  loss: 0.7570024728775024
+batch_idx: 250  loss: 0.6891460565931768
+batch_idx: 500  loss: 0.6931751245510078
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+  precision 0.8314001385843935  recall 0.04692  F1 0.08882705243500809top 1 accuracy:51.87500080108643, top 2 accuracy:100.0
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+  precision 0.8097336210287227  recall 0.0429  F1 0.08148299922825117top 1 accuracy:51.65500049591064, top 2 accuracy:100.0
+
+Epoch: [4 | 25] LR: 0.002000
+batch_idx: 0  loss: 0.6443685293197632
+batch_idx: 250  loss: 0.7056812549017341
+batch_idx: 500  loss: 0.7092192158727588
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+  precision 0.7687690493918097  recall 0.2332  F1 0.3578492617651019top 1 accuracy:58.1560005569458, top 2 accuracy:100.0
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+  precision 0.7678885418230819  recall 0.237  F1 0.3622084974357505top 1 accuracy:58.26500015258789, top 2 accuracy:100.0
+
+Epoch: [5 | 25] LR: 0.002000
+batch_idx: 0  loss: 0.7784894704818726
+batch_idx: 250  loss: 0.7237056173176405
+batch_idx: 500  loss: 0.7249992606406678
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+  precision 0.7514651607921407  recall 0.28984  F1 0.41833013107954997top 1 accuracy:59.69500102996826, top 2 accuracy:100.0
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+  precision 0.7524255936401142  recall 0.2963  F1 0.4251707114760705top 1 accuracy:59.945001220703126, top 2 accuracy:100.0
+
+Epoch: [6 | 25] LR: 0.002000
+batch_idx: 0  loss: 0.6591683030128479
+batch_idx: 250  loss: 0.7436494756029897
+batch_idx: 500  loss: 0.7511693546158111
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+  precision 0.7458961346565683  recall 0.31386  F1 0.44181289103681726top 1 accuracy:60.34300079345703, top 2 accuracy:100.0
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+  precision 0.7436782283219623  recall 0.3216  F1 0.4490224466618103top 1 accuracy:60.55000057220459, top 2 accuracy:100.0
+
+Epoch: [7 | 25] LR: 0.002000
+batch_idx: 0  loss: 0.7095571756362915
+batch_idx: 250  loss: 0.7715808347876804
+batch_idx: 500  loss: 0.778420239865423
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+  precision 0.7478098623679951  recall 0.3063  F1 0.43459257715084904top 1 accuracy:60.14600051879883, top 2 accuracy:100.0
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+  precision 0.7472073935108785  recall 0.3126  F1 0.4407914733218042top 1 accuracy:60.355000495910645, top 2 accuracy:100.0
+
+Epoch: [8 | 25] LR: 0.002000
+batch_idx: 0  loss: 0.8804647326469421
+batch_idx: 250  loss: 0.7984959751486304
+batch_idx: 500  loss: 0.8054119998109555
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+  precision 0.7543566933561179  recall 0.28542  F1 0.4141437075738746top 1 accuracy:59.618000717163085, top 2 accuracy:100.0
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+  precision 0.7544968040288923  recall 0.2902  F1 0.41917419807312645top 1 accuracy:59.79500064849854, top 2 accuracy:100.0
+
+Epoch: [9 | 25] LR: 0.002000
+batch_idx: 0  loss: 0.7633751630783081
+batch_idx: 250  loss: 0.832087209262696
+batch_idx: 500  loss: 0.8345998447098418
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+  precision 0.755680437131452  recall 0.27356  F1 0.4017019404286732top 1 accuracy:59.25300071716308, top 2 accuracy:100.0
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+  precision 0.7569093093318825  recall 0.2796  F1 0.4083549293457073top 1 accuracy:59.49500045776367, top 2 accuracy:100.0
+
+Epoch: [10 | 25] LR: 0.002000
+batch_idx: 0  loss: 0.9887776374816895
+batch_idx: 250  loss: 0.8492912187044364
+batch_idx: 500  loss: 0.8643280864951616
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+  precision 0.7755530164619999  recall 0.20218  F1 0.3207446332040303top 1 accuracy:57.18200080871582, top 2 accuracy:100.0
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+  precision 0.7738807212004993  recall 0.2041  F1 0.3230105701943386top 1 accuracy:57.21500072479248, top 2 accuracy:100.0
+
+Epoch: [11 | 25] LR: 0.002000
+batch_idx: 0  loss: 1.2240664958953857
+batch_idx: 250  loss: 0.8857436134995692
+batch_idx: 500  loss: 0.902516081185636
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+  precision 0.7937386536591606  recall 0.13222  F1 0.22667993732135897top 1 accuracy:54.89500091552734, top 2 accuracy:100.0
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+  precision 0.7975854904950065  recall 0.1306  F1 0.22444794952159025top 1 accuracy:54.86500072479248, top 2 accuracy:100.0
+
+Epoch: [12 | 25] LR: 0.002000
+batch_idx: 0  loss: 0.7384220361709595
+batch_idx: 250  loss: 0.9318807089471247
+batch_idx: 500  loss: 0.947954709420423
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+  precision 0.8083109510038952  recall 0.09406  F1 0.16851102745903485top 1 accuracy:53.58700073242188, top 2 accuracy:100.0
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+  precision 0.8130177666405706  recall 0.0922  F1 0.16561813266757197top 1 accuracy:53.550000762939455, top 2 accuracy:100.0
+
+Epoch: [13 | 25] LR: 0.002000
+batch_idx: 0  loss: 1.030306100845337
+batch_idx: 250  loss: 0.9573154983767476
+batch_idx: 500  loss: 0.9719527237667533
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+  precision 0.8399658228427775  recall 0.03186  F1 0.06139141652976009top 1 accuracy:51.29200065612793, top 2 accuracy:100.0
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+  precision 0.8205142724820318  recall 0.029  F1 0.056020045036929526top 1 accuracy:51.14500064849854, top 2 accuracy:100.0
+
+Epoch: [14 | 25] LR: 0.002000
+batch_idx: 0  loss: 0.7818940281867981
+batch_idx: 250  loss: 0.9958908880849283
+batch_idx: 500  loss: 1.0125880669690892
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+  precision 0.8481031746031744  recall 0.02034  F1 0.03972722470715705top 1 accuracy:50.428000907897946, top 2 accuracy:100.0
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+  precision 0.8145436507936508  recall 0.0104  F1 0.02053777602895436top 1 accuracy:50.41500072479248, top 2 accuracy:100.0
+
+Epoch: [15 | 25] LR: 0.002000
+batch_idx: 0  loss: 1.3177716732025146
+batch_idx: 250  loss: 1.0216467997942313
+batch_idx: 500  loss: 1.0230020811695777
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+  precision 0.58  recall 0.80038  F1 0.6725979802663035top 1 accuracy:50.017000427246096, top 2 accuracy:100.0
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+  precision 0.575  recall 0.8503  F1 0.6860625833157931top 1 accuracy:50.015000343322754, top 2 accuracy:100.0
+
+Epoch: [16 | 25] LR: 0.002000
+batch_idx: 0  loss: 1.482945442199707
+batch_idx: 250  loss: 1.079718798517706
+batch_idx: 500  loss: 1.0846762804689998
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+  precision 0.505  recall 0.99002  F1 0.6688339955318323top 1 accuracy:50.001000022888185, top 2 accuracy:100.0
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+  precision 0.5  recall 1.0  F1 0.6666666666666666top 1 accuracy:50.0, top 2 accuracy:100.0
+
+Epoch: [17 | 25] LR: 0.002000
+batch_idx: 0  loss: 0.8291946649551392
+batch_idx: 250  loss: 1.0896380225500737
+batch_idx: 500  loss: 1.1043802050059428
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+  precision 0.5  recall 1.0  F1 0.6666666666666666top 1 accuracy:50.0, top 2 accuracy:100.0
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+  precision 0.5  recall 1.0  F1 0.6666666666666666top 1 accuracy:50.0, top 2 accuracy:100.0
+
+Epoch: [18 | 25] LR: 0.002000
+batch_idx: 0  loss: 1.4106788635253906
+batch_idx: 250  loss: 1.1458727173596264
+batch_idx: 500  loss: 1.1435750779991378
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+  precision 0.5  recall 1.0  F1 0.6666666666666666top 1 accuracy:50.0, top 2 accuracy:100.0
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+  precision 0.5  recall 1.0  F1 0.6666666666666666top 1 accuracy:50.0, top 2 accuracy:100.0
+
+Epoch: [19 | 25] LR: 0.002000
+batch_idx: 0  loss: 0.9005767107009888
+batch_idx: 250  loss: 1.1900241895025945
+batch_idx: 500  loss: 1.1877305574283867
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+  precision 0.5  recall 1.0  F1 0.6666666666666666top 1 accuracy:50.0, top 2 accuracy:100.0
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+  precision 0.5  recall 1.0  F1 0.6666666666666666top 1 accuracy:50.0, top 2 accuracy:100.0
+
+Epoch: [20 | 25] LR: 0.002000
+batch_idx: 0  loss: 0.9014544486999512
+batch_idx: 250  loss: 1.2064294143027043
+batch_idx: 500  loss: 1.20499037542267
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+  precision 0.5  recall 1.0  F1 0.6666666666666666top 1 accuracy:50.0, top 2 accuracy:100.0
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+  precision 0.5  recall 1.0  F1 0.6666666666666666top 1 accuracy:50.0, top 2 accuracy:100.0
+
+Epoch: [21 | 25] LR: 0.002000
+batch_idx: 0  loss: 2.141130208969116
+batch_idx: 250  loss: 1.25572723387722
+batch_idx: 500  loss: 1.2620773454626164
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+  precision 0.5  recall 1.0  F1 0.6666666666666666top 1 accuracy:50.0, top 2 accuracy:100.0
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+  precision 0.5  recall 1.0  F1 0.6666666666666666top 1 accuracy:50.0, top 2 accuracy:100.0
+
+Epoch: [22 | 25] LR: 0.002000
+batch_idx: 0  loss: 1.8401564359664917
+batch_idx: 250  loss: 1.246225102489213
+batch_idx: 500  loss: 1.2540829658746244
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+  precision 0.5  recall 1.0  F1 0.6666666666666666top 1 accuracy:50.0, top 2 accuracy:100.0
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+  precision 0.5  recall 1.0  F1 0.6666666666666666top 1 accuracy:50.0, top 2 accuracy:100.0
+
+Epoch: [23 | 25] LR: 0.002000
+batch_idx: 0  loss: 1.2577710151672363
+batch_idx: 250  loss: 1.2567377425284976
+batch_idx: 500  loss: 1.3009358195963496
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+  precision 0.5  recall 1.0  F1 0.6666666666666666top 1 accuracy:50.0, top 2 accuracy:100.0
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+  precision 0.5  recall 1.0  F1 0.6666666666666666top 1 accuracy:50.0, top 2 accuracy:100.0
+
+Epoch: [24 | 25] LR: 0.002000
+batch_idx: 0  loss: 1.3344497680664062
+batch_idx: 250  loss: 1.3437253386375914
+batch_idx: 500  loss: 1.33775468381817
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+  precision 0.5  recall 1.0  F1 0.6666666666666666top 1 accuracy:50.0, top 2 accuracy:100.0
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+  precision 0.5  recall 1.0  F1 0.6666666666666666top 1 accuracy:50.0, top 2 accuracy:100.0
+
+Epoch: [25 | 25] LR: 0.002000
+batch_idx: 0  loss: 1.5542032718658447
+batch_idx: 250  loss: 1.3465417903732968
+batch_idx: 500  loss: 1.3699793820371646
+---Label inference on complete training dataset:
+Dataset Overall Statistics:
+  precision 0.5  recall 1.0  F1 0.6666666666666666top 1 accuracy:50.0, top 2 accuracy:100.0
+
+---Label inference on testing dataset:
+Dataset Overall Statistics:
+  precision 0.5  recall 1.0  F1 0.6666666666666666top 1 accuracy:50.0, top 2 accuracy:100.0
+Best top 1 accuracy:
+60.34300079345703

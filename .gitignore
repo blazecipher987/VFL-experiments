@@ -129,3 +129,51 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# ============================================================
+# Project-specific (VFL label inference)
+# ============================================================
+
+# IDE / editor / tooling
+.vscode/
+.idea/
+.claude/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Downloaded datasets (large, regenerable; keep the .py loaders)
+Code/datasets/tiny-imagenet-200/
+Code/datasets/yahoo_answers_csv/
+Code/datasets/archive/
+Code/datasets/archive.zip
+Code/datasets/cifar-10-batches-py/
+Code/datasets/cifar-100-python/
+Code/datasets/CINIC*/
+Code/datasets/*.zip
+Code/datasets/*.tar.gz
+Code/datasets/*.gz
+
+# Model checkpoints (large binaries, regenerable)
+*.pth
+*.pt
+*.ckpt
+
+# Pretrained transformer weights (keep the NeedDownloadTransformers placeholder)
+Code/models/transformers/*.bin
+Code/models/transformers/*.safetensors
+Code/models/transformers/*.h5
+
+# Duplicates and scratch
+Code - Copy/
+Code/Discarded bats/
+
+# Optional: the large per-sample t-SNE CSVs (~MBs each). Uncomment to exclude
+# them; leave commented to keep the artifact self-contained.
+# Code/saved_experiment_results/csv_files/**/*tsne*.csv
+
+# NOTE: intentionally NOT ignored (small, valuable, reproducibility data):
+#   research_log.md, paper_results/, Code/**/*.md, the .bat run scripts,
+#   Code/saved_experiment_results/csv_files/ (separability CSVs),
+#   Code/saved_experiment_results/figures/

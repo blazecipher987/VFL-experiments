@@ -34,7 +34,13 @@ class Cifar100Setup(DatasetSetup):
 
     def get_transformed_dataset(self, file_path, party_num=None, train=True):
         transforms_ = self.get_transforms()
-        _cifar100_dataset = datasets.CIFAR100(file_path, train, transform=transforms_)
+        # _cifar100_dataset = datasets.CIFAR100(file_path, train, transform=transforms_)
+        _cifar100_dataset = datasets.CIFAR100(
+    root=file_path,
+    train=train,
+    download=True,
+    transform=transforms_
+)
         return _cifar100_dataset
 
     def clip_one_party_data(self, x, half):

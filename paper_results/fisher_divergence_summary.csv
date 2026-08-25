@@ -1,0 +1,44 @@
+dataset,phase,exp_id,condition,epoch,fisher_A,fisher_B,fisher_divergence,intra_var_A,grad_norm_A,defense_scale,defense_fired,notes
+CIFAR10,Phase 1,EXP-001,benign,29,0.517,0.638,-0.120,,,,No,Phase 1 characterization 30ep
+CIFAR10,Phase 1,EXP-001,active_party_a,29,0.826,0.381,+0.444,,,, Yes (Fisher only — no defense active),Phase 1 characterization 30ep
+CIFAR10,Phase 1,EXP-001,active_all_parties,29,0.699,0.841,-0.142,,,,No,Both parties amplify — no asymmetry
+CIFAR10,Phase 1,EXP-001,active+laplace_dp,29,0.969,~0.0001,+0.968,,,,Yes (but training collapsed),Laplace DP collapses training
+CIFAR10,Phase 1,EXP-001,active+gc_75pct,29,0.822,0.301,+0.521,,,,Yes (Fisher only — no defense),GC amplifies rather than hides the signal
+CIFAR10,Phase 2 Defense,EXP-007,active+defense,8,0.86,0.39,+0.47,,,,Yes (defense fires),Epoch burn-in ends; defense activates
+CIFAR10,Phase 2 Defense,EXP-007,active+defense,29,0.879,0.357,+0.522,,,,Yes,Phase 2 30ep — divergence rises despite defense (semantic misalignment mechanism)
+CIFAR10,Phase 2 Defense,EXP-007,benign+defense,8,,,+0.038,,,,No (below tau=0.10),Defense correctly dormant on benign
+CIFAR10,Phase 2 Defense,EXP-007,benign+defense,29,0.598,0.503,+0.094,,,,No (barely at/below tau),Defense correctly dormant
+CIFAR10,Phase 4 (100ep),EXP-011,active_party_a,0,0.39,,+0.25,,,,No (pre-burn-in),100ep trajectory — attack no defense
+CIFAR10,Phase 4 (100ep),EXP-011,active_party_a,8,0.88,,+0.52,,,,No (no defense),Divergence already high at burn-in end
+CIFAR10,Phase 4 (100ep),EXP-011,active_party_a,29,0.92,,+0.56,,,,No,Divergence growing
+CIFAR10,Phase 4 (100ep),EXP-011,active_party_a,49,0.97,,+0.59,,,,No,
+CIFAR10,Phase 4 (100ep),EXP-011,active_party_a,74,1.49,,+0.89,,,,No,Late-training surge
+CIFAR10,Phase 4 (100ep),EXP-011,active_party_a,99,2.12,0.91,+1.21,,,,No,Final epoch
+CIFAR10,Phase 4 (100ep),EXP-011,active+defense,0,0.44,,+0.34,,,,No (pre-burn-in),100ep trajectory — attack+defense
+CIFAR10,Phase 4 (100ep),EXP-011,active+defense,8,0.86,0.39,+0.47,,0.63,Yes,Defense first fires — scale=0.63
+CIFAR10,Phase 4 (100ep),EXP-011,active+defense,14,0.84,,+0.51,,0.59,Yes,
+CIFAR10,Phase 4 (100ep),EXP-011,active+defense,29,0.94,,+0.60,,0.50,Yes,
+CIFAR10,Phase 4 (100ep),EXP-011,active+defense,49,0.96,,+0.59,,0.51,Yes,
+CIFAR10,Phase 4 (100ep),EXP-011,active+defense,74,1.72,,+1.24,,0.00,Yes,Complete gradient block from this epoch
+CIFAR10,Phase 4 (100ep),EXP-011,active+defense,99,1.74,0.71,+1.03,,0.07,Yes,Near-complete block at final epoch
+CIFAR100,Phase 1,EXP-006,benign,29,0.232,0.231,+0.002,,,,No,Phase 1 characterization 30ep
+CIFAR100,Phase 1,EXP-006,active_party_a,29,0.352,0.220,+0.131,,,,Yes (Fisher only),Phase 1 characterization 30ep
+CIFAR100,Phase 1,EXP-006,active_all_parties,29,0.280,0.305,-0.025,,,,No,Symmetric attack — no asymmetry
+CIFAR100,Phase 1,EXP-006,active+gc_75pct,29,0.330,0.126,+0.203,,,,Yes (Fisher only),GC amplifies signal even more for CIFAR100
+CIFAR100,Phase 2 Defense,EXP-007,active+defense,8,,,+0.109,,,,Yes,Burn-in ends at epoch 8; defense fires
+CIFAR100,Phase 2 Defense,EXP-007,active+defense,29,0.339,0.172,+0.167,,,,Yes,Divergence above tau throughout
+CIFAR100,Phase 2 Defense,EXP-007,benign+defense,7,,,,-0.020,,,,No (divergence negative),Falls below tau naturally before burn-in ends
+CIFAR100,Phase 2 Defense,EXP-007,benign+defense,29,0.222,0.253,-0.031,,,,No,Defense NEVER fires on CIFAR100 benign
+CIFAR100,Phase 19 Grad Proj,EXP-032,active+grad_proj,0,0.212,0.147,+0.065,2.76,0.033,,No,Grad proj defense seed-0 — epoch-by-epoch trajectory
+CIFAR100,Phase 19 Grad Proj,EXP-032,active+grad_proj,7,0.306,0.233,+0.073,0.154,0.244,,No (burn-in)
+CIFAR100,Phase 19 Grad Proj,EXP-032,active+grad_proj,8,0.303,0.231,+0.072,0.171,0.242,,No (τ=0.10 not exceeded)
+CIFAR100,Phase 19 Grad Proj,EXP-032,active+grad_proj,10,0.316,0.231,+0.085,0.174,0.249,,No,Below tau
+CIFAR100,Phase 19 Grad Proj,EXP-032,active+grad_proj,11,0.317,0.215,+0.101,0.162,0.265,,Yes (FIRST ACTIVATION),Defense fires for first time — barely above τ=0.10
+CIFAR100,Phase 19 Grad Proj,EXP-032,active+grad_proj,12,0.015,0.277,-0.262,141644,0.007,,Self-perpetuating,CATASTROPHIC COLLAPSE: intra_var_A 0.162→141644; grad_norm 0.265→0.007
+CIFAR100,Phase 19 Grad Proj,EXP-032,active+grad_proj,13,0.036,0.326,-0.289,35252,0.001,,No (divergence negative),Collapse persisting
+CIFAR100,Phase 19 Grad Proj,EXP-032,active+grad_proj,14,0.035,0.336,-0.301,10424,0.003,,No,
+CIFAR100,Phase 19 Grad Proj,EXP-032,active+grad_proj,20,0.016,0.330,-0.314,7.96,0.075,,No,Intra_var recovering
+CIFAR100,Phase 19 Grad Proj,EXP-032,active+grad_proj,25,0.095,0.311,-0.217,0.084,0.169,,No,Still negative divergence
+CIFAR100,Phase 19 Grad Proj,EXP-032,active+grad_proj,49,0.257,0.257,+0.001,0.111,0.304,,No (barely),Near-zero divergence
+CIFAR100,Phase 19 Grad Proj,EXP-032,active+grad_proj,50-84,~0.38,~0.43,-0.04 to -0.05,0.06-0.10,0.28-0.31,,No,Stable negative — defense never fires again
+CIFAR100,Phase 19 Grad Proj,EXP-032,active+grad_proj,85-149,~0.435,~0.510,-0.07 to -0.08,0.003-0.005,0.86-1.05,,No,Stable negative for 64 epochs — party A permanently less discriminative than party B

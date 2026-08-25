@@ -3,6 +3,8 @@ import ast
 import os
 import time
 import dill
+import random
+import numpy as np
 from time import time
 import sys
 sys.path.insert(0, "./")
@@ -21,6 +23,7 @@ from my_utils import utils
 from models import model_sets
 import my_optimizers
 import possible_defenses
+import characterization_monitor
 
 plt.switch_backend('agg')
 
@@ -66,15 +69,33 @@ class VflFramework(nn.Module):
         # In order to evaluate attack performance, we need to collect label sequence of training dataset
         self.if_collect_training_dataset_labels = False
 
-        # adversarial options
+        # adversarial options — symmetric defenses (applied to both parties)
         self.defense_ppdl = args.ppdl
         self.defense_gc = args.gc
         self.defense_lap_noise = args.lap_noise
         self.defense_multistep_grad = args.multistep_grad
         # self.defense_ss = args.ss
 
+        # asymmetric adaptive perturbation (novel Phase 2 defense)
+        # flag comes from argparse; the actual defense instance is assigned in
+        # main() after the SeparabilityMonitor has been created, because the
+        # defense depends on the monitor's Fisher divergence readings.
+        self.defense_asymmetric = args.asymmetric_defense
+        self.asymmetric_defense = None  # set to AsymmetricAdaptivePerturbation in main()
+        self.adversarial_aux_defense = None  # set to AdversarialAuxiliaryDefense in main()
+        self.gradient_projection_defense = None  # set to GradientProjectionDefense in main()
+        self.persistent_projection_defense = None  # set to PersistentProjectionDefense in main()
+        self.mdpp_defense = None  # set to MultiDirectionPersistentProjection in main()
+
+        # current training epoch — updated at the start of each epoch in main()
+        # so that batch-level methods can access it for the burn-in guard.
+        self.current_epoch = 0
+
         # indicates whether to conduct the direct label inference attack
         self.direct_attack_on = False
+
+        # separability monitor (set to a SeparabilityMonitor instance to enable)
+        self.sep_monitor = None
 
         # loss funcs
         self.loss_func_top_model = nn.CrossEntropyLoss()
@@ -208,7 +229,17 @@ class VflFramework(nn.Module):
         # -top model-
         # (we omit interactive layer for it doesn't effect our attack or possible defenses)
         # by concatenating output of bottom a/b(dim=10+10=20), we get input of top model
-        input_tensor_top_model_a.data = output_tensor_bottom_model_a.data
+        # z_a embedding corruption: feed noisy z_a to the top model while keeping
+        # output_tensor_bottom_model_a clean for (a) the separability monitor and
+        # (b) the bottom model's backward path.  Detection logic still reads the
+        # clean Fisher divergence from the previous epoch.
+        if (self.defense_asymmetric and self.asymmetric_defense is not None
+                and self.asymmetric_defense.za_noise_std > 0.0):
+            input_tensor_top_model_a.data = self.asymmetric_defense.apply_za_corruption(
+                output_tensor_bottom_model_a, self.current_epoch
+            ).data
+        else:
+            input_tensor_top_model_a.data = output_tensor_bottom_model_a.data
         input_tensor_top_model_b.data = output_tensor_bottom_model_b.data
 
         if args.use_top_model:
@@ -228,6 +259,16 @@ class VflFramework(nn.Module):
         # read grad of: input of top model(also output of bottom models), which will be used as bottom model's target
         grad_output_bottom_model_a = input_tensor_top_model_a.grad
         grad_output_bottom_model_b = input_tensor_top_model_b.grad
+
+        # collect raw (pre-defense) embeddings and gradient norms for separability monitor
+        if self.sep_monitor is not None:
+            self.sep_monitor.collect_batch(
+                output_tensor_bottom_model_a,
+                output_tensor_bottom_model_b,
+                target,
+                grad_output_bottom_model_a,
+                grad_output_bottom_model_b,
+            )
 
         # defenses here: the server(who controls top model) can defend against label inference attack by protecting
         # print("before defense, grad_output_bottom_model_a:", grad_output_bottom_model_a)
@@ -264,6 +305,60 @@ class VflFramework(nn.Module):
         #         torch.sign(tensor, out=tensor)
         grad_output_bottom_model_a, grad_output_bottom_model_b = tuple(model_all_layers_grads_list)
         # print("after defense, grad_output_bottom_model_a:", grad_output_bottom_model_a)
+
+        # asymmetric adaptive perturbation defense —
+        # runs AFTER all symmetric defenses so it is the final gate on Party A's gradient.
+        # Party B's gradient (grad_output_bottom_model_b) is intentionally never modified here.
+        if self.defense_asymmetric and self.asymmetric_defense is not None:
+            grad_output_bottom_model_a, _ = self.asymmetric_defense.apply(
+                grad_output_bottom_model_a, self.current_epoch
+            )
+
+        # adversarial auxiliary classifier defense —
+        # server maintains a classifier on z_a and sends its REVERSED gradient to Party A,
+        # actively pushing z_a toward class-indiscriminativeness.
+        # MaliciousSGD amplifying a reversed gradient strengthens the defense (self-reinforcing).
+        # Can be combined with asymmetric_defense: suppression runs first, then adversarial correction.
+        if self.adversarial_aux_defense is not None:
+            grad_output_bottom_model_a = self.adversarial_aux_defense.apply(
+                grad_output_bottom_model_a,
+                output_tensor_bottom_model_a.detach(),
+                target,
+                self.current_epoch,
+            )
+
+        # gradient projection defense —
+        # removes from grad_output_a the component aligned with the discriminative direction.
+        # ||grad_proj|| <= ||grad_output_a|| always — no NaN amplification risk.
+        if self.gradient_projection_defense is not None:
+            grad_output_bottom_model_a = self.gradient_projection_defense.apply(
+                grad_output_bottom_model_a,
+                output_tensor_bottom_model_a.detach(),
+                target,
+                self.current_epoch,
+            )
+
+        # persistent projection defense —
+        # EMA-based discriminative direction projected every detected epoch.
+        # Fixes the one-shot collapse in GradientProjectionDefense.
+        if self.persistent_projection_defense is not None:
+            grad_output_bottom_model_a = self.persistent_projection_defense.apply(
+                grad_output_bottom_model_a,
+                output_tensor_bottom_model_a.detach(),
+                target,
+                self.current_epoch,
+            )
+
+        # multi-direction persistent projection defense —
+        # Projects K SVD-derived directions from W_aux simultaneously.
+        # DCR(K, C) = K / min(C-1, embed_dim); CIFAR-100 K=10 → ~10% coverage.
+        if self.mdpp_defense is not None:
+            grad_output_bottom_model_a = self.mdpp_defense.apply(
+                grad_output_bottom_model_a,
+                output_tensor_bottom_model_a.detach(),
+                target,
+                self.current_epoch,
+            )
 
         # server sends back output_tensor_server_a.grad to the adversary (participant a), so
         # the adversary can use this gradient to perform direct label inference attack.
@@ -438,6 +533,23 @@ def main():
         setting_str += str(args.multistep_grad_bins)
     if args.test_upper_bound:
         setting_str += "_upperbound"
+    if args.asymmetric_defense:
+        # encode defense hyperparameters in the filename so results are self-documenting
+        setting_str += f"_asym_def-a={args.asymmetric_alpha}-t={args.asymmetric_tau}-b={args.asymmetric_burn_in}"
+        if args.asymmetric_noise_std > 0.0:
+            setting_str += f"-n={args.asymmetric_noise_std}"
+        if args.asymmetric_sign_flip:
+            setting_str += f"-sf"
+        if args.asymmetric_za_noise_std > 0.0:
+            setting_str += f"-za={args.asymmetric_za_noise_std}"
+    if args.adversarial_aux_defense:
+        setting_str += f"_adv_aux-l={args.adversarial_aux_lambda}"
+    if args.gradient_projection_defense:
+        setting_str += "_grad_proj"
+    if args.persistent_projection:
+        setting_str += f"_pers_proj-ema={args.persistent_proj_alpha_ema}"
+    if args.mdpp:
+        setting_str += f"_mdpp-k={args.mdpp_k_directions}-ema={args.mdpp_alpha_ema}"
     setting_str += "_"
     if args.dataset != 'Yahoo':
         setting_str += "half="
@@ -449,6 +561,114 @@ def main():
     model = VflFramework()
     model = model.cuda()
     cudnn.benchmark = True
+
+    if args.monitor_separability:
+        csv_dir = args.save_dir + f"/csv_files/{args.dataset}_csv_files"
+        model.sep_monitor = characterization_monitor.SeparabilityMonitor(
+            save_dir=csv_dir,
+            setting_str=setting_str,
+            dataset_name=args.dataset,
+        )
+
+    if args.adversarial_aux_defense:
+        if model.sep_monitor is None:
+            print("[WARNING] --adversarial-aux-defense requires --monitor-separability True. "
+                  "Defense is DISABLED because the monitor is not active.")
+        else:
+            model.adversarial_aux_defense = possible_defenses.AdversarialAuxiliaryDefense(
+                embedding_dim=args.adversarial_aux_embedding_dim,
+                num_classes=args.adversarial_aux_num_classes,
+                lambda_adv=args.adversarial_aux_lambda,
+                burn_in=args.asymmetric_burn_in,
+                tau=args.asymmetric_tau,
+                aux_lr=args.adversarial_aux_lr,
+            )
+            print(f"[Defense] AdversarialAuxiliaryDefense active: "
+                  f"embedding_dim={args.adversarial_aux_embedding_dim}, "
+                  f"num_classes={args.adversarial_aux_num_classes}, "
+                  f"lambda={args.adversarial_aux_lambda}, "
+                  f"burn_in={args.asymmetric_burn_in}, tau={args.asymmetric_tau}, "
+                  f"aux_lr={args.adversarial_aux_lr}")
+
+    if args.gradient_projection_defense:
+        if model.sep_monitor is None:
+            print("[WARNING] --gradient-projection-defense requires --monitor-separability True. "
+                  "Defense is DISABLED because the monitor is not active.")
+        else:
+            model.gradient_projection_defense = possible_defenses.GradientProjectionDefense(
+                embedding_dim=args.gradient_proj_embedding_dim,
+                num_classes=args.gradient_proj_num_classes,
+                burn_in=args.asymmetric_burn_in,
+                tau=args.asymmetric_tau,
+                aux_lr=args.gradient_proj_lr,
+            )
+            print(f"[Defense] GradientProjectionDefense active: "
+                  f"embedding_dim={args.gradient_proj_embedding_dim}, "
+                  f"num_classes={args.gradient_proj_num_classes}, "
+                  f"burn_in={args.asymmetric_burn_in}, tau={args.asymmetric_tau}, "
+                  f"aux_lr={args.gradient_proj_lr}")
+
+    if args.persistent_projection:
+        if model.sep_monitor is None:
+            print("[WARNING] --persistent-projection requires --monitor-separability True. "
+                  "Defense is DISABLED because the monitor is not active.")
+        else:
+            model.persistent_projection_defense = possible_defenses.PersistentProjectionDefense(
+                embedding_dim=args.gradient_proj_embedding_dim,
+                num_classes=args.gradient_proj_num_classes,
+                alpha_ema=args.persistent_proj_alpha_ema,
+                burn_in=args.persistent_proj_burn_in,
+                tau=args.asymmetric_tau,
+                aux_lr=args.gradient_proj_lr,
+            )
+            print(f"[Defense] PersistentProjectionDefense active: "
+                  f"embedding_dim={args.gradient_proj_embedding_dim}, "
+                  f"num_classes={args.gradient_proj_num_classes}, "
+                  f"alpha_ema={args.persistent_proj_alpha_ema}, "
+                  f"burn_in={args.persistent_proj_burn_in}, tau={args.asymmetric_tau}, "
+                  f"aux_lr={args.gradient_proj_lr}")
+
+    if args.mdpp:
+        if model.sep_monitor is None:
+            print("[WARNING] --mdpp requires --monitor-separability True. "
+                  "Defense is DISABLED because the monitor is not active.")
+        else:
+            model.mdpp_defense = possible_defenses.MultiDirectionPersistentProjection(
+                embedding_dim=args.gradient_proj_embedding_dim,
+                num_classes=args.gradient_proj_num_classes,
+                k_directions=args.mdpp_k_directions,
+                alpha_ema=args.mdpp_alpha_ema,
+                burn_in=args.mdpp_burn_in,
+                tau=args.asymmetric_tau,
+                aux_lr=args.gradient_proj_lr,
+            )
+            print(f"[Defense] MultiDirectionPersistentProjection active: "
+                  f"k={args.mdpp_k_directions}, alpha_ema={args.mdpp_alpha_ema}, "
+                  f"burn_in={args.mdpp_burn_in}, tau={args.asymmetric_tau}, "
+                  f"embedding_dim={args.gradient_proj_embedding_dim}, "
+                  f"num_classes={args.gradient_proj_num_classes}")
+
+    if args.asymmetric_defense:
+        if model.sep_monitor is None:
+            # the defense reads Fisher divergence from the monitor each epoch;
+            # without it the defense cannot function — warn loudly rather than silently no-op.
+            print("[WARNING] --asymmetric-defense requires --monitor-separability True. "
+                  "Defense is DISABLED because the monitor is not active.")
+        else:
+            model.asymmetric_defense = possible_defenses.AsymmetricAdaptivePerturbation(
+                alpha=args.asymmetric_alpha,
+                tau=args.asymmetric_tau,
+                burn_in=args.asymmetric_burn_in,
+                gradient_noise_std=args.asymmetric_noise_std,
+                sign_flip=args.asymmetric_sign_flip,
+                za_noise_std=args.asymmetric_za_noise_std,
+            )
+            print(f"[Defense] AsymmetricAdaptivePerturbation active: "
+                  f"alpha={args.asymmetric_alpha}, tau={args.asymmetric_tau}, "
+                  f"burn_in={args.asymmetric_burn_in}, "
+                  f"gradient_noise_std={args.asymmetric_noise_std}, "
+                  f"sign_flip={args.asymmetric_sign_flip}, "
+                  f"za_noise_std={args.asymmetric_za_noise_std}")
 
     stone1 = args.stone1  # 50 int(args.epochs * 0.5)
     stone2 = args.stone2  # 85 int(args.epochs * 0.8)
@@ -472,6 +692,9 @@ def main():
     # print('Evaluation on the testing dataset:')
     # test_per_epoch(test_loader=val_loader, framework=model, k=args.k, loss_func_top_model=model.loss_func_top_model)
     for epoch in range(args.epochs):
+        # make epoch visible to batch-level methods (e.g. defense burn-in guard)
+        model.current_epoch = epoch
+
         print('model.optimizer_top_model current lr {:.5e}'.format(model.optimizer_top_model.param_groups[0]['lr']))
         print('model.optimizer_malicious_bottom_model_a current lr {:.5e}'.format(
             model.optimizer_malicious_bottom_model_a.param_groups[0]['lr']))
@@ -507,6 +730,20 @@ def main():
         lr_scheduler_m_a.step()
         lr_scheduler_b_b.step()
 
+        if model.sep_monitor is not None:
+            model.sep_monitor.compute_epoch_metrics(epoch)
+            # refresh the Fisher divergence used by both defenses for the next epoch
+            if model.asymmetric_defense is not None:
+                model.asymmetric_defense.update_divergence(model.sep_monitor)
+            if model.adversarial_aux_defense is not None:
+                model.adversarial_aux_defense.update_divergence(model.sep_monitor)
+            if model.gradient_projection_defense is not None:
+                model.gradient_projection_defense.update_divergence(model.sep_monitor)
+            if model.persistent_projection_defense is not None:
+                model.persistent_projection_defense.update_divergence(model.sep_monitor)
+            if model.mdpp_defense is not None:
+                model.mdpp_defense.update_divergence(model.sep_monitor)
+
         if epoch == args.epochs - 1:
             txt_name = f"{args.dataset}_saved_framework{setting_str}"
             savedStdout = sys.stdout
@@ -539,6 +776,9 @@ def main():
                        loss_func_top_model=model.loss_func_top_model)
         print('Evaluation on the testing dataset:')
         test_per_epoch(test_loader=val_loader, framework=model, k=args.k, loss_func_top_model=model.loss_func_top_model)
+
+    if model.sep_monitor is not None:
+        model.sep_monitor.save_to_csv()
 
     # save model
     torch.save(model, os.path.join(dir_save_model, f"{args.dataset}_saved_framework{setting_str}.pth"),
@@ -608,6 +848,10 @@ if __name__ == '__main__':
     parser.add_argument('--if-cluster-outputsA', help='if_cluster_outputsA',
                         type=ast.literal_eval, default=True)
     # attack paras
+    parser.add_argument('--monitor-separability',
+                        help='log per-epoch embedding separability metrics (Fisher, silhouette, etc.) '
+                             'for Phase 1 characterization study',
+                        type=ast.literal_eval, default=False)
     parser.add_argument('--use-mal-optim',
                         help='whether the attacker uses the malicious optimizer',
                         type=ast.literal_eval, default=False)
@@ -642,6 +886,126 @@ if __name__ == '__main__':
                         type=int, default=6)
     parser.add_argument('--multistep_grad_bound_abs', help='bound of multistep-grad',
                         type=float, default=3e-2)
+    # asymmetric adaptive perturbation defense (novel Phase 2 defense)
+    # requires --monitor-separability True to function
+    parser.add_argument('--asymmetric-defense',
+                        help='turn on AsymmetricAdaptivePerturbation: server suppresses only '
+                             'Party A\'s gradient when Fisher divergence exceeds tau. '
+                             'Requires --monitor-separability True.',
+                        type=ast.literal_eval, default=False)
+    parser.add_argument('--asymmetric-alpha',
+                        help='suppression aggressiveness for asymmetric defense. '
+                             'scale = max(0, 1 - alpha*(divergence - tau)). '
+                             'Higher = faster suppression per unit of divergence.',
+                        type=float, default=1.0)
+    parser.add_argument('--asymmetric-tau',
+                        help='Fisher divergence threshold to trigger suppression. '
+                             'Set above benign-training ceiling (~0.0). '
+                             'Recommended: 0.10 for CIFAR10, 0.05 for CIFAR100.',
+                        type=float, default=0.10)
+    parser.add_argument('--asymmetric-burn-in',
+                        help='epochs before asymmetric defense activates. '
+                             'Random-init embeddings produce spurious divergence '
+                             'for the first ~8 epochs; this guard prevents false positives.',
+                        type=int, default=8)
+    parser.add_argument('--asymmetric-noise-std',
+                        help='gradient noise injection for asymmetric defense. '
+                             'When > 0, Gaussian noise is added after suppression: '
+                             'grad = scale*grad + noise_std*(1-scale)*E[|grad|]*randn(). '
+                             'Prevents MaliciousSGD zero-gradient vacuum at high alpha. '
+                             '0.0 = suppression only (original behaviour).',
+                        type=float, default=0.0)
+    parser.add_argument('--asymmetric-sign-flip',
+                        help='When defense fires, alternate the sign of Party A\'s gradient '
+                             'every batch. Consecutive opposite-sign gradients force '
+                             'MaliciousSGD ratio=1.0 on every batch, collapsing amplification '
+                             'to standard SGD and causing weight updates to average to zero.',
+                        type=ast.literal_eval, default=False)
+    parser.add_argument('--asymmetric-za-noise-std',
+                        help='Embedding-space corruption: add Gaussian noise to z_a BEFORE '
+                             'the top model forward pass. noise = std*(1-scale)*randn(z_a). '
+                             'Monitor and bottom model backward still see clean z_a. '
+                             '0.0 = disabled.',
+                        type=float, default=0.0)
+    # adversarial auxiliary classifier defense (Phase 18 — for high-class-count datasets)
+    parser.add_argument('--adversarial-aux-defense',
+                        help='Server maintains an auxiliary classifier on z_a and sends its '
+                             'REVERSED gradient to Party A, actively pushing z_a toward '
+                             'class-indiscriminativeness. Requires --monitor-separability True.',
+                        type=ast.literal_eval, default=False)
+    parser.add_argument('--adversarial-aux-lambda',
+                        help='Scale of the reversed auxiliary gradient (lambda_adv). '
+                             '1.0 = equal weight to top-model gradient. '
+                             'Increase to make adversarial correction dominate.',
+                        type=float, default=1.0)
+    parser.add_argument('--adversarial-aux-lr',
+                        help='Learning rate for the server auxiliary classifier (Adam). '
+                             'Default 1e-3 works well; lower if aux classifier over-fits early.',
+                        type=float, default=1e-3)
+    parser.add_argument('--adversarial-aux-embedding-dim',
+                        help='Output dimension of Party A bottom model (size_bottom_out). '
+                             'CIFAR-100: 100.  CIFAR-10/CINIC10L: 10.',
+                        type=int, default=100)
+    parser.add_argument('--adversarial-aux-num-classes',
+                        help='Number of label classes (output dim of auxiliary classifier). '
+                             'CIFAR-100: 100.  CIFAR-10/CINIC10L: 10.',
+                        type=int, default=100)
+    # gradient projection defense (Phase 19 — numerically safe alternative to adv aux)
+    # projects grad_output_a onto the subspace orthogonal to the discriminative direction.
+    # ||grad_proj|| <= ||grad_output_a|| always — no NaN amplification risk.
+    # requires --monitor-separability True to function.
+    parser.add_argument('--gradient-projection-defense',
+                        help='Remove the discriminative component from grad_output_a via '
+                             'orthogonal projection. Safe by construction: projection can '
+                             'only shrink the gradient, never amplify it. '
+                             'Requires --monitor-separability True.',
+                        type=ast.literal_eval, default=False)
+    parser.add_argument('--gradient-proj-embedding-dim',
+                        help='Output dimension of Party A bottom model (size_bottom_out). '
+                             'CIFAR-100: 100.  CIFAR-10/CINIC10L: 10.',
+                        type=int, default=100)
+    parser.add_argument('--gradient-proj-num-classes',
+                        help='Number of label classes. CIFAR-100: 100.  CIFAR-10/CINIC10L: 10.',
+                        type=int, default=100)
+    parser.add_argument('--gradient-proj-lr',
+                        help='Learning rate for the auxiliary classifier used to identify '
+                             'the discriminative direction (Adam). Default 1e-3.',
+                        type=float, default=1e-3)
+    # persistent projection defense (Phase 22/23 — EMA-based stable projection)
+    # shares --gradient-proj-embedding-dim, --gradient-proj-num-classes, --gradient-proj-lr,
+    # and --asymmetric-tau from the args above.
+    parser.add_argument('--persistent-projection',
+                        help='EMA-based persistent discriminative subspace projection. '
+                             'Maintains a smoothed direction estimate and projects every detected '
+                             'epoch — fixes the one-shot collapse in --gradient-projection-defense. '
+                             'Requires --monitor-separability True.',
+                        type=ast.literal_eval, default=False)
+    parser.add_argument('--persistent-proj-alpha-ema',
+                        help='EMA smoothing coefficient for the discriminative direction. '
+                             '0.1=slow adaptation, 0.3=fast. Default 0.2.',
+                        type=float, default=0.2)
+    parser.add_argument('--persistent-proj-burn-in',
+                        help='Epochs before PersistentProjection activates. '
+                             'Shorter than GradProj default (4 vs 8) since EMA stabilises faster.',
+                        type=int, default=4)
+    parser.add_argument('--mdpp',
+                        help='Multi-Direction Persistent Projection: removes K SVD-derived '
+                             'directions from W_aux simultaneously each detected epoch. '
+                             'Covers DCR(K,C)=K/min(C-1,embed_dim) of the discriminative '
+                             'subspace. Uses --gradient-proj-* and --asymmetric-tau. '
+                             'Requires --monitor-separability True.',
+                        type=ast.literal_eval, default=False)
+    parser.add_argument('--mdpp-k-directions',
+                        help='Number of SVD directions to project out. '
+                             'CIFAR-100 (C=100, embed=100): k=10 → DCR≈10%%, k=20 → DCR≈20%%.',
+                        type=int, default=10)
+    parser.add_argument('--mdpp-alpha-ema',
+                        help='EMA coefficient blending current SVD directions into D_ema. '
+                             'Same semantics as --persistent-proj-alpha-ema. Default 0.2.',
+                        type=float, default=0.2)
+    parser.add_argument('--mdpp-burn-in',
+                        help='Epochs before MDPP activates. Default 4.',
+                        type=int, default=4)
     # training paras
     parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
                         help='number of datasets loading workers (default: 4)')
@@ -661,7 +1025,14 @@ if __name__ == '__main__':
                         help='stone1 for step scheduler')
     parser.add_argument('--stone2', default=85, type=int, metavar='s2',
                         help='stone2 for step scheduler')
+    parser.add_argument('--manual-seed', dest='manual_seed', type=int, default=0,
+                        help='manual random seed for reproducibility across runs')
     args = parser.parse_args()
     if args.use_mal_optim_all:
         args.use_mal_optim = True
+    random.seed(args.manual_seed)
+    np.random.seed(args.manual_seed)
+    torch.manual_seed(args.manual_seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(args.manual_seed)
     main()

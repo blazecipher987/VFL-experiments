@@ -106,7 +106,10 @@ use_cuda = torch.cuda.is_available()
 # Random seed
 if args.manualSeed is None:
     args.manualSeed = random.randint(1, 10000)
+random.seed(args.manualSeed)
 np.random.seed(args.manualSeed)
+torch.manual_seed(args.manualSeed)
+torch.cuda.manual_seed_all(args.manualSeed)
 
 best_acc = 0  # best test accuracy
 
