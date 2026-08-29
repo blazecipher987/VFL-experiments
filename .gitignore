@@ -173,7 +173,19 @@ Code/Discarded bats/
 # them; leave commented to keep the artifact self-contained.
 # Code/saved_experiment_results/csv_files/**/*tsne*.csv
 
-# NOTE: intentionally NOT ignored (small, valuable, reproducibility data):
-#   research_log.md, paper_results/, Code/**/*.md, the .bat run scripts,
-#   Code/saved_experiment_results/csv_files/ (separability CSVs),
-#   Code/saved_experiment_results/figures/
+# Notes, presentations, and personal / AI-assisted material (excluded per request)
+*.md
+*.pptx
+Code/present.html
+Code/slide.html
+
+# Common AI-assistant artifacts
+CLAUDE.md
+.cursor/
+.cursorrules
+.aider*
+.github/copilot-instructions.md
+
+# Still tracked (reproducibility data, not personal):
+#   paper_results/*.csv, Code/saved_experiment_results/csv_files/ and figures/,
+#   source code (*.py), and the .bat / .sh run scripts
