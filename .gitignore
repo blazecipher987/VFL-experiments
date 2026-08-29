@@ -189,3 +189,6 @@ CLAUDE.md
 # Still tracked (reproducibility data, not personal):
 #   paper_results/*.csv, Code/saved_experiment_results/csv_files/ and figures/,
 #   source code (*.py), and the .bat / .sh run scripts
+# Original 2022-paper assets (not our work)
+supplementary_material_for_sec2022_label_inference.pdf.pdf
+illustration_keep_predict_loss.png
